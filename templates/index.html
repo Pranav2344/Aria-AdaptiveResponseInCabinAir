@@ -1,0 +1,313 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ARIA — Air Recirculation Intelligence Agent</title>
+    <link rel="stylesheet" href="/static/css/style.css?v=20260311c">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
+</head>
+<body>
+
+    <!-- Connection Overlay -->
+    <div id="connection-overlay">
+        <div class="overlay-content">
+            <div class="overlay-spinner"></div>
+            <div class="loading-text">
+                <h2 id="overlay-title">Connecting to ARIA</h2>
+                <p id="overlay-message">Initializing sensors<span class="dot-animation">...</span></p>
+                <div class="loading-progress">
+                    <div class="progress-bar cyan"></div>
+                    <div class="progress-bar yellow"></div>
+                    <div class="progress-bar purple"></div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Toast Container -->
+    <div id="toast-container"></div>
+
+    <!-- Header -->
+    <header class="app-header">
+        <div class="header-left">
+            <div class="logo">
+                <div class="logo-icon">
+                    <i class="fas fa-wind"></i>
+                </div>
+                <div class="logo-text">
+                    <h1>ARIA</h1>
+                    <span class="logo-subtitle">Adaptive Recirculation Intelligence</span>
+                </div>
+            </div>
+        </div>
+        <div class="header-right">
+            <div class="connection-pill" id="connection-status">
+                <span class="conn-dot"></span>
+                <span class="conn-label">Offline</span>
+            </div>
+            <div class="uptime-counter">
+                <i class="fas fa-clock"></i>
+                <span id="uptime">00:00:00</span>
+            </div>
+        </div>
+    </header>
+
+    <!-- Main Decision Panel -->
+    <section class="decision-panel">
+        <div class="decision-grid">
+
+            <!-- LEFT: Mode Display -->
+            <div class="card decision-card" id="decision-card">
+                <div class="mode-display">
+                    <div class="mode-icon-area" id="mode-icon-area">
+                        <i class="fas fa-wind"></i>
+                    </div>
+                    <div class="mode-info">
+                        <h2 class="mode-name" id="mode-name">--</h2>
+                        <span class="sub-mode" id="sub-mode">--</span>
+                    </div>
+                </div>
+
+                <div class="decision-meta">
+                    <span class="priority-badge" id="decision-priority">--</span>
+                    <div class="confidence-bar-container">
+                        <span class="confidence-label">Confidence</span>
+                        <div class="confidence-bar">
+                            <div class="confidence-fill" id="confidence-fill"></div>
+                        </div>
+                        <span class="confidence-text" id="confidence-text">--%</span>
+                    </div>
+                </div>
+
+                <div class="decision-details">
+                    <div class="manual-control-embedded">
+                        <div class="manual-control-header">
+                            <i class="fas fa-gamepad"></i>
+                            <span>Manual Control</span>
+                        </div>
+                        <div class="manual-control-buttons">
+                            <button class="btn-manual-inline" id="btn-recirculate-on" data-mode="RECIRCULATE">
+                                <i class="fas fa-redo"></i>Recirculation Mode
+                            </button>
+                            <button class="btn-manual-inline" id="btn-fresh-air-on" data-mode="FRESH_AIR">
+                                <i class="fas fa-wind"></i>Fresh Air Mode
+                            </button>
+                            <button class="btn-manual-inline" id="btn-manual-clear" data-mode="AUTO">
+                                <i class="fas fa-robot"></i>Auto Mode
+                            </button>
+                        </div>
+                    </div>
+
+                    <!-- ACTION HINT - PROMINENT DIRECTIVE -->
+                    <div class="action-hint-prominent" id="action-hint-container"></div>
+                    
+                    <div class="detail-section">
+                        <h4><i class="fas fa-brain"></i> Cause</h4>
+                        <div class="detail-list" id="decision-reasons"></div>
+                    </div>
+                    <div class="detail-section">
+                        <h4><i class="fas fa-lightbulb"></i> Suggestions</h4>
+                        <div class="detail-list" id="decision-suggestions"></div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- RIGHT: Gauges -->
+            <div class="gauge-stack">
+                <!-- Comfort Index Gauge -->
+                <div class="card gauge-card">
+                    <h3 class="gauge-title">COMFORT</h3>
+                    <div class="gauge-wrapper">
+                        <svg viewBox="0 0 200 120" class="gauge-svg">
+                            <path d="M 20 100 A 80 80 0 0 1 180 100" fill="none" stroke="rgba(255,255,255,0.08)" stroke-width="14" stroke-linecap="round"/>
+                            <path d="M 20 100 A 80 80 0 0 1 180 100" fill="none" stroke="url(#comfort-gradient)" stroke-width="14" stroke-linecap="round" id="comfort-arc" stroke-dasharray="0 251.33"/>
+                            <defs>
+                                <linearGradient id="comfort-gradient" x1="0%" y1="0%" x2="100%" y2="0%">
+                                    <stop offset="0%" stop-color="#ef4444"/>
+                                    <stop offset="50%" stop-color="#f59e0b"/>
+                                    <stop offset="100%" stop-color="#22c55e"/>
+                                </linearGradient>
+                            </defs>
+                        </svg>
+                        <div class="gauge-value-center">
+                            <span class="gauge-number" id="comfort-value">--</span>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Risk Score Gauge -->
+                <div class="card gauge-card">
+                    <h3 class="gauge-title">RISK SCORE</h3>
+                    <div class="gauge-wrapper">
+                        <svg viewBox="0 0 200 120" class="gauge-svg">
+                            <path d="M 20 100 A 80 80 0 0 1 180 100" fill="none" stroke="rgba(255,255,255,0.08)" stroke-width="14" stroke-linecap="round"/>
+                            <path d="M 20 100 A 80 80 0 0 1 180 100" fill="none" stroke="url(#risk-gradient)" stroke-width="14" stroke-linecap="round" id="gauge-arc" stroke-dasharray="0 251.33"/>
+                            <defs>
+                                <linearGradient id="risk-gradient" x1="0%" y1="0%" x2="100%" y2="0%">
+                                    <stop offset="0%" stop-color="#22c55e"/>
+                                    <stop offset="50%" stop-color="#f59e0b"/>
+                                    <stop offset="100%" stop-color="#ef4444"/>
+                                </linearGradient>
+                            </defs>
+                        </svg>
+                        <div class="gauge-value-center">
+                            <span class="gauge-number" id="gauge-value">--</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+        </div>
+    </section>
+
+    <!-- Sensor Cards -->
+    <section class="sensor-section">
+        <div class="sensor-grid">
+            <div class="sensor-card" id="card-co2">
+                <div class="sensor-icon co2-icon"><i class="fas fa-cloud"></i></div>
+                <div class="sensor-body">
+                    <span class="sensor-label">CO2 Level</span>
+                    <span class="sensor-value" id="val-co2">--</span>
+                    <span class="sensor-unit">ppm</span>
+                </div>
+                <div class="sensor-status-dot" id="dot-co2"></div>
+                <div class="sensor-bar"><div class="sensor-bar-fill" id="bar-co2"></div></div>
+            </div>
+
+            <div class="sensor-card" id="card-aqi">
+                <div class="sensor-icon aqi-icon"><i class="fas fa-lungs"></i></div>
+                <div class="sensor-body">
+                    <span class="sensor-label">AQI</span>
+                    <span class="sensor-value" id="val-aqi">--</span>
+                    <span class="sensor-unit">index</span>
+                </div>
+                <div class="sensor-status-dot" id="dot-aqi"></div>
+                <div class="sensor-bar"><div class="sensor-bar-fill" id="bar-aqi"></div></div>
+            </div>
+
+            <div class="sensor-card" id="card-pm25">
+                <div class="sensor-icon pm25-icon"><i class="fas fa-smog"></i></div>
+                <div class="sensor-body">
+                    <span class="sensor-label">PM2.5</span>
+                    <span class="sensor-value" id="val-pm25">--</span>
+                    <span class="sensor-unit">µg/m³</span>
+                </div>
+                <div class="sensor-status-dot" id="dot-pm25"></div>
+                <div class="sensor-bar"><div class="sensor-bar-fill" id="bar-pm25"></div></div>
+            </div>
+
+            <div class="sensor-card" id="card-temperature">
+                <div class="sensor-icon temp-icon"><i class="fas fa-temperature-half"></i></div>
+                <div class="sensor-body">
+                    <span class="sensor-label">Temperature</span>
+                    <span class="sensor-value" id="val-temperature">--</span>
+                    <span class="sensor-unit">°C</span>
+                </div>
+                <div class="sensor-status-dot" id="dot-temperature"></div>
+                <div class="sensor-bar"><div class="sensor-bar-fill" id="bar-temperature"></div></div>
+            </div>
+
+            <div class="sensor-card" id="card-humidity">
+                <div class="sensor-icon hum-icon"><i class="fas fa-droplet"></i></div>
+                <div class="sensor-body">
+                    <span class="sensor-label">Humidity</span>
+                    <span class="sensor-value" id="val-humidity">--</span>
+                    <span class="sensor-unit">%</span>
+                </div>
+                <div class="sensor-status-dot" id="dot-humidity"></div>
+                <div class="sensor-bar"><div class="sensor-bar-fill" id="bar-humidity"></div></div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Chart -->
+    <section class="chart-section">
+        <div class="card">
+            <h3 class="section-title"><i class="fas fa-chart-line"></i> Sensor Trends</h3>
+            <div class="chart-container">
+                <canvas id="chart-main"></canvas>
+            </div>
+        </div>
+    </section>
+
+    <section class="override-section">
+        <div class="card">
+            <h3 class="section-title"><i class="fas fa-sliders"></i> Manual Overrides</h3>
+            <div class="override-grid">
+                <div class="override-row">
+                    <label class="override-label" for="slider-co2">CO2</label>
+                    <input type="range" class="slider" data-sensor="co2" id="slider-co2" min="300" max="5000" value="850" step="10">
+                    <span class="override-val" id="sval-co2">850</span>
+                    <button class="btn-apply" data-sensor="co2"><i class="fas fa-check"></i>Apply</button>
+                    <button class="btn-clear" data-sensor="co2"><i class="fas fa-xmark"></i>Clear</button>
+                </div>
+
+                <div class="override-row">
+                    <label class="override-label" for="slider-aqi">AQI</label>
+                    <input type="range" class="slider" data-sensor="aqi" id="slider-aqi" min="0" max="500" value="65" step="1">
+                    <span class="override-val" id="sval-aqi">65</span>
+                    <button class="btn-apply" data-sensor="aqi"><i class="fas fa-check"></i>Apply</button>
+                    <button class="btn-clear" data-sensor="aqi"><i class="fas fa-xmark"></i>Clear</button>
+                </div>
+
+                <div class="override-row">
+                    <label class="override-label" for="slider-pm25">PM2.5</label>
+                    <input type="range" class="slider" data-sensor="pm25" id="slider-pm25" min="0" max="500" value="22" step="0.5">
+                    <span class="override-val" id="sval-pm25">22</span>
+                    <button class="btn-apply" data-sensor="pm25"><i class="fas fa-check"></i>Apply</button>
+                    <button class="btn-clear" data-sensor="pm25"><i class="fas fa-xmark"></i>Clear</button>
+                </div>
+
+                <div class="override-row">
+                    <label class="override-label" for="slider-temperature">Temperature</label>
+                    <input type="range" class="slider" data-sensor="temperature" id="slider-temperature" min="-10" max="55" value="28" step="0.1">
+                    <span class="override-val" id="sval-temperature">28</span>
+                    <button class="btn-apply" data-sensor="temperature"><i class="fas fa-check"></i>Apply</button>
+                    <button class="btn-clear" data-sensor="temperature"><i class="fas fa-xmark"></i>Clear</button>
+                </div>
+
+                <div class="override-row">
+                    <label class="override-label" for="slider-humidity">Humidity</label>
+                    <input type="range" class="slider" data-sensor="humidity" id="slider-humidity" min="5" max="100" value="52" step="0.5">
+                    <span class="override-val" id="sval-humidity">52</span>
+                    <button class="btn-apply" data-sensor="humidity"><i class="fas fa-check"></i>Apply</button>
+                    <button class="btn-clear" data-sensor="humidity"><i class="fas fa-xmark"></i>Clear</button>
+                </div>
+            </div>
+            <div class="override-actions">
+                <button class="btn-reset" id="btn-reset-all"><i class="fas fa-rotate-left"></i>Reset All</button>
+            </div>
+        </div>
+    </section>
+
+
+
+    <!-- Industry Standard Thresholds -->
+    <section class="thresholds-section">
+        <div class="card">
+            <h3 class="section-title"><i class="fas fa-ruler"></i> Industry Reference Thresholds</h3>
+            <div class="threshold-grid" id="industry-thresholds"></div>
+        </div>
+    </section>
+
+    <!-- Decision History -->
+    <section class="history-section">
+        <div class="card">
+            <h3 class="section-title"><i class="fas fa-clock-rotate-left"></i> Decision History</h3>
+            <div class="decision-log" id="decision-log">
+                <div class="log-empty">No history yet</div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Footer -->
+    <footer class="app-footer">
+        <span> ARIA V2.0</span>
+    </footer>
+
+    <script src="/static/js/app.js?v=20260311e"></script>
+</body>
+</html>

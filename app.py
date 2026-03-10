@@ -5,7 +5,6 @@ import logging
 import os
 import time
 from contextlib import asynccontextmanager, suppress
-from app import app
 from fastapi import FastAPI, Request, WebSocket, WebSocketDisconnect
 from fastapi.responses import JSONResponse
 from fastapi.staticfiles import StaticFiles
